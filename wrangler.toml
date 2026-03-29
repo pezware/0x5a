@@ -1,0 +1,41 @@
+name = "volunteer-platform"
+main = "workers/api/index.ts"
+compatibility_date = "2026-03-29"
+
+[env.preview]
+vars = { NODE_ENV = "preview" }
+
+[env.production]
+vars = { NODE_ENV = "production" }
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "${CONFIG_KV_ID}"
+preview_id = "${CONFIG_KV_PREVIEW_ID}"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "volunteer-platform"
+id = "${D1_DATABASE_ID}"
+
+[[queues.producers]]
+binding = "TASK_QUEUE"
+queue = "volunteer-tasks"
+
+[[queues.consumers]]
+binding = "TASK_QUEUE"
+queue = "volunteer-tasks"
+script_name = "workers/queues/index.ts"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "volunteer-media"
+
+[vars]
+PLATFORM_CONFIG_PATH = "config/platform.json"
