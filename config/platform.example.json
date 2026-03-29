@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "branding": {
+    "name": "Open Volunteer Platform",
+    "shortName": "VolunteerOps",
+    "primaryColor": "#1155CC",
+    "secondaryColor": "#FFB703",
+    "logo": "/assets/brand/logo.svg",
+    "darkModeDefault": false
+  },
+  "modules": {
+    "auction": {
+      "enabled": true,
+      "enableBuyNow": true,
+      "minimumBidIncrement": 10
+    },
+    "volunteer": {
+      "enabled": true,
+      "requireDeviceTrust": true
+    },
+    "campaigns": {
+      "enabled": true,
+      "enableResendSync": true
+    },
+    "donations": {
+      "enabled": true,
+      "paymentMethods": ["cash", "card", "transfer", "pledge"]
+    },
+    "events": {
+      "enabled": true,
+      "allowSelfEnrollment": true
+    },
+    "contacts": {
+      "enabled": true,
+      "defaultGroups": ["newsletter", "volunteer-alumni"]
+    }
+  },
+  "tenants": [
+    {
+      "id": "default",
+      "name": "Demo Collective",
+      "locale": "en-US",
+      "timeZone": "America/New_York",
+      "currency": "USD",
+      "modules": {
+        "auction": { "enabled": true },
+        "campaigns": { "enabled": false },
+        "contacts": { "enabled": true, "defaultGroups": ["vip"] }
+      },
+      "brandingOverrides": {
+        "primaryColor": "#0F172A",
+        "darkModeDefault": true
+      }
+    }
+  ],
+  "integrations": {
+    "email": {
+      "provider": "resend",
+      "apiKeySecret": "RESEND_API_KEY",
+      "defaultFrom": {
+        "address": "volunteers@example.org",
+        "name": "VolunteerOps"
+      }
+    },
+    "payments": {
+      "provider": "manual",
+      "currency": "USD"
+    },
+    "storage": {
+      "bucket": "volunteerops-media",
+      "publicBaseUrl": "https://media.volunteerops.example"
+    },
+    "analytics": {
+      "provider": "superset",
+      "dashboardUrl": "https://dashboards.volunteerops.example"
+    }
+  },
+  "roles": {
+    "Admin": ["*"],
+    "EventLead": [
+      "guests.read",
+      "guests.write",
+      "volunteers.read",
+      "items.read",
+      "items.write"
+    ],
+    "Cashier": ["checkout.read", "checkout.write", "payments.write"],
+    "CampaignManager": ["campaigns.read", "campaigns.write"],
+    "Volunteer": ["guests.read", "items.read", "bids.write"]
+  }
+}

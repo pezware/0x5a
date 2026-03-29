@@ -10,10 +10,11 @@ Tiny-step tracker for the Cloudflare rewrite. Update this file every time you fi
   - Reviewer: Mencius (sub-agent, 2026-03-29) — flagged follow-up edits; resolved in same session.  
   - Completed: 2026-03-29.
 
-- [ ] **Step 2 – Introduce Brandless Config Artifacts**  
-  - Scope: add `config/platform.example.json`, config loader, theming context, tests.  
-  - Tests: Vitest for config parser + UI snapshot toggle.  
-  - Status: Not started.
+- [x] **Step 2 – Introduce Brandless Config Artifacts**  
+  - Scope: add `config/platform.example.json`, config loader (`src/config/platform-config.js`), brand runtime helper, docs, and tests.  
+  - Tests: `node --test` covering parser + theme runtime (2026-03-29).  
+  - Reviewer: Maxwell (sub-agent) — confirmed validation/docs alignment on 2026-03-29.  
+  - Completed: 2026-03-29.
 
 - [ ] **Step 3 – Cloudflare Monorepo Skeleton**  
 - [ ] **Step 4 – Config-backed Authentication & Access Control**  

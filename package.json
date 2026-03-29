@@ -1,0 +1,27 @@
+{
+  "name": "cloudflare-volunteer-platform",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Brandless volunteer/event/campaign platform targeting the Cloudflare stack.",
+  "type": "module",
+  "scripts": {
+    "build": "node --test",
+    "lint": "node --test --test-name-pattern \"^lint\"",
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "keywords": [
+    "cloudflare",
+    "volunteer",
+    "serverless"
+  ],
+  "author": "Open Volunteer Platform maintainers",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "directories": {
+    "doc": "docs"
+  }
+}

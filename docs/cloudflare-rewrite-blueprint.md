@@ -49,17 +49,19 @@
 ## 2. Brandless Configurable Product Spec
 
 ### 2.1 Configuration Surfaces
-- **`config/platform.json` (new):**
+- **`config/platform.json` + `config/platform.example.json`:**
   - `branding`: `{ name, shortName, primaryColor, secondaryColor, logo, darkModeDefault }` replacing hard-coded strings (e.g., Remote Config default sender names).
+  - `schemaVersion`: positive integer that increments with breaking changes; the loader rejects configs with invalid versions.
   - `modules`: feature toggles (`auction`, `volunteer`, `events`, `campaigns`, `donations`, `contacts`). Each module exposes granular capabilities (e.g., `auction.enableBuyNow`, `campaigns.enableResendSync`).
   - `tenants`: optional array supporting multiple org instances with overrides for branding, locales, currency, time zone, authentication policy (password-only, OTP, SSO).
-  - `integrations`: `email` (Resend API key/region, sender pool), `payments` (manual, Stripe/checkout proxy), `storage` (bucket, CDN), `analytics` (PostHog/GA event keys).
+  - `integrations`: `email` (Resend API key/region, sender pool), `payments` (manual, Stripe/checkout proxy), `storage` (bucket, CDN), `analytics` (dashboards/observability metadata).
   - `roles`: declarative matrix mapping UI routes/actions to roles (Editor, Cashier, Table Host, Campaign Manager) to keep access policies brand-agnostic.
+  - The repository ships an example config plus a parser/normalizer (`src/config/platform-config.js`) and a brand runtime helper (`src/brand/branding-runtime.js`) used by tests and, eventually, the UI. See `docs/configuration.md` for the full workflow.
 
 ### 2.2 Plugin-style Extensibility
 - **Module Loader:** Each module exports a `registerModule(config, services)` hook that receives Cloudflare bindings (Workers KV, D1, Durable Objects, R2) plus integration clients. UI shells (React routes) read `modules` config to mount features dynamically.
 - **Schema Versioning:** `schemaVersion` field in config + D1 migrations ensures open-source forks can evolve without collisions.
-- **Brand Packs:** Provide sample configs (`docs/examples/config.sample.json`) for events, volunteer drives, or campaign-only deployments to showcase reusability without referencing the legacy name.
+- **Brand Packs:** Provide sample configs (start from `config/platform.example.json`) for events, volunteer drives, or campaign-only deployments to showcase reusability without referencing the legacy name.
 
 ### 2.3 Compliance & Secrets
 - Secrets (Resend keys, bootstrap passwords) stored in Workers Secrets; config file only carries non-sensitive toggles.
