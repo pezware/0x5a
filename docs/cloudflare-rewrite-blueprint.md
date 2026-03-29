@@ -117,6 +117,7 @@ When practical, each step should pair (a) a docs update, (b) harness verificatio
 
 4. **Config-backed Authentication & Access Control**
    - Port OTP/password flows into Workers, backed by KV/Secrets; integrate Cloudflare Access JWT validation middleware.
+   - Share runtime helpers (`docs/auth-access.md`) so the Auth Worker and UI gates rely on the same `createAccessPolicy` evaluator.
    - Harness: Add integration tests mocking Access headers; run `npm run harness:risk-tier` on auth paths.
 
 5. **D1 Schema + Migration Scripts**

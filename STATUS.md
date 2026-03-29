@@ -22,6 +22,7 @@ Tiny-step tracker for the Cloudflare rewrite. Update this file every time you fi
   - Reviewer: Epicurus (sub-agent) — LGTM after verifying parser/tests/docs alignment.  
   - Completed: 2026-03-29.
 - [ ] **Step 4 – Config-backed Authentication & Access Control**  
+  - 2026-03-29: Added `src/auth/access-policy.js`, docs (`docs/auth-access.md`), and unit tests so Workers/UI layers can evaluate config-defined roles. Tests: `pnpm test`. Reviewer: Lagrange (sub-agent) — LGTM for helper/tests/docs alignment.
 - [ ] **Step 5 – D1 Schema + Migration Scripts**  
 - [ ] **Step 6 – Durable Object Bid Engine**  
 - [ ] **Step 7 – R2 Media Pipeline**  
