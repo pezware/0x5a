@@ -39,3 +39,5 @@ bucket_name = "volunteer-media"
 
 [vars]
 PLATFORM_CONFIG_PATH = "config/platform.json"
+PLATFORM_CONFIG_KV_KEY = "platform-config"
+AUTH_VERSION = "dev"

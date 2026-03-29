@@ -1,0 +1,12 @@
+name = "volunteer-platform-auth"
+main = "workers/auth/index.ts"
+compatibility_date = "2026-03-29"
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "${CONFIG_KV_ID}"
+preview_id = "${CONFIG_KV_PREVIEW_ID}"
+
+[vars]
+PLATFORM_CONFIG_KV_KEY = "platform-config"
+AUTH_VERSION = "dev"

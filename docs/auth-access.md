@@ -28,8 +28,30 @@ function requirePermission(userRoles, permission) {
 - Permissions are expressed as strings (`checkout.read`, `campaigns.write`, etc.) so Workers/UI routes can remain agnostic to domain-specific constants. `getPermissionsForRoles` always yields a `Set`, which you can convert to arrays if deterministic ordering is required.
 - Subsequent Step 4 work will plug this helper into the Auth Worker to evaluate Access JWT claims + shared-password sessions. Keeping the helper in `src/` plus unit tests allows the Workers bundle and UI layers to share identical logic.
 
-## Next Steps
+## Step 4 Breakdown
 
-1. Wire the Auth Worker to validate shared-password submissions using the config-driven issuer/audience metadata.
-2. Attach `createAccessPolicy` to Worker middleware so every route checks feature/module state plus role permissions before executing.
-3. Extend the helper with module toggle awareness once `modules.*` dictate UI mount points (planned later in Step 4).
+- **Step 4.1 – Worker Auth Inputs & Secrets**  
+  - Load platform config + Workers secrets inside the Auth Worker.  
+  - Expose `/health` + `/version` endpoints so config drift is detectable early.  
+  - Bindings:  
+    - `CONFIG_KV` (existing) stores `platform-config`.  
+    - `PLATFORM_CONFIG_KV_KEY` env var selects the KV key (default `platform-config`).  
+    - Wrangler secrets `AUTH_SHARED_PASSWORD_HASH` and `AUTH_SESSION_SECRET` must be present; `/health` reports whether they’re loaded.  
+    - Optional vars `AUTH_VERSION` / `AUTH_COMMIT` feed the `/version` response.  
+  - Deployment: use `wrangler.auth.toml` (Auth worker entrypoint) while retaining `wrangler.toml` for the API worker.
+  - Tests: config loader stubs, secret-binding guards (`tests/auth-worker-context.test.js`).
+
+- **Step 4.2 – Shared Password Session Issuer**  
+  - POST endpoint that validates the shared password hash, issues signed session tokens, and annotates them with role claims derived from `createAccessPolicy`.  
+  - Tests: crypto verification, TTL enforcement, error handling for lockouts.
+
+- **Step 4.3 – Access JWT Validation Middleware**  
+  - Utilities that accept Cloudflare Access JWTs, validate issuer/audience/expiry, and translate Access groups → platform roles.  
+  - Tests: mocked Access tokens, mixed role sources (Access + config overrides).
+
+- **Step 4.4 – Worker Route Guard Harness**  
+  - Shared middleware integrating module toggles + permission checks before business handlers run.  
+  - Tests: Miniflare-driven worker routes proving `403` vs `200` outcomes for different role sets.
+
+- **Step 4.5 – Documentation & STATUS Closeout**  
+  - Finalize docs with real Worker wiring instructions, update `STATUS.md`, and ensure harness commands cover auth flows end-to-end.

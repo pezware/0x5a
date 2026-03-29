@@ -116,7 +116,11 @@ When practical, each step should pair (a) a docs update, (b) harness verificatio
    - Harness: Update smoke tests to include `wrangler deploy --dry-run` and TypeScript checks for Workers.
 
 4. **Config-backed Authentication & Access Control**
-   - Port OTP/password flows into Workers, backed by KV/Secrets; integrate Cloudflare Access JWT validation middleware.
+   - **Step 4.1 – Worker Auth Inputs & Secrets:** bind platform config + secret inputs inside the Auth Worker and expose `/health` + `/version` routes.  
+   - **Step 4.2 – Shared Password Session Issuer:** add POST endpoint that verifies the shared password hash and signs session tokens with role claims from `createAccessPolicy`.  
+   - **Step 4.3 – Access JWT Validation Middleware:** validate Cloudflare Access JWTs, map Access groups to platform roles, and hand the result to downstream Workers.  
+   - **Step 4.4 – Worker Route Guard Harness:** standard middleware enforcing module toggles + permissions before API logic runs, tested via Miniflare harness cases.  
+   - **Step 4.5 – Docs & STATUS Closeout:** update docs/STATUS once auth Workers + guards are wired.  
    - Share runtime helpers (`docs/auth-access.md`) so the Auth Worker and UI gates rely on the same `createAccessPolicy` evaluator.
    - Harness: Add integration tests mocking Access headers; run `npm run harness:risk-tier` on auth paths.
 

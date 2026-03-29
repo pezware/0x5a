@@ -6,7 +6,7 @@ This repo contains the brandless volunteer/event/campaign platform designed for 
 
 - `docs/cloudflare-rewrite-blueprint.md` – migration plan + architecture.
 - `docs/configuration.md` – platform config surface.
-- `docs/auth-access.md` – Step 4 helper details for config-backed authentication/authorization.
+- `docs/auth-access.md` – Step 4 helper details, including Auth Worker endpoints `/health` & `/version`.
 
 ## Development
 
@@ -14,3 +14,8 @@ This repo contains the brandless volunteer/event/campaign platform designed for 
 pnpm install
 pnpm test
 ```
+
+### Workers
+
+- API worker: `wrangler dev`
+- Auth worker: `wrangler dev -c wrangler.auth.toml`
