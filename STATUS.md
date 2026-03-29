@@ -24,6 +24,7 @@ Tiny-step tracker for the Cloudflare rewrite. Update this file every time you fi
 - [ ] **Step 4 – Config-backed Authentication & Access Control**  
   - 2026-03-29: Added `src/auth/access-policy.js`, docs (`docs/auth-access.md`), and unit tests so Workers/UI layers can evaluate config-defined roles. Tests: `pnpm test`. Reviewer: Lagrange (sub-agent) — LGTM for helper/tests/docs alignment.
   - 2026-03-29: Step 4.1 — auth worker now loads platform config from KV, verifies Wrangler secrets, exposes `/health` + `/version`, and ships a dedicated `wrangler.auth.toml`. Tests: `pnpm test` (handler + context suites). Reviewer: Bacon (sub-agent) — LGTM after wiring/coverage checks.
+  - 2026-03-29: Step 4.2 — implemented `/sessions/shared-password` with password hashing (`src/auth/password-utils.js`), HS256 session tokens (`src/auth/session-token.js`), config/schema doc updates, and comprehensive handler tests. Tests: `pnpm test` (adds password/token suites + auth handler cases). Reviewer: Godel (sub-agent) — LGTM.
 - [ ] **Step 5 – D1 Schema + Migration Scripts**  
 - [ ] **Step 6 – Durable Object Bid Engine**  
 - [ ] **Step 7 – R2 Media Pipeline**  
