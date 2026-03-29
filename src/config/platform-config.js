@@ -95,6 +95,34 @@ function normalizeIntegrations(rawIntegrations = {}) {
   return normalized;
 }
 
+function normalizeAuth(rawAuth) {
+  if (rawAuth === undefined) {
+    throw new Error('auth block is required');
+  }
+  requireObject(rawAuth, 'auth');
+  const {
+    issuer,
+    audience,
+    sharedPasswordLabel,
+    sharedPasswordHash,
+    tokenTTLSeconds = 3600
+  } = rawAuth;
+  if (!issuer || !audience || !sharedPasswordLabel || !sharedPasswordHash) {
+    throw new Error('auth block requires issuer, audience, sharedPasswordLabel, and sharedPasswordHash');
+  }
+  const ttl = Number(tokenTTLSeconds);
+  if (!Number.isInteger(ttl) || ttl <= 0) {
+    throw new Error('auth.tokenTTLSeconds must be a positive integer');
+  }
+  return {
+    issuer: String(issuer),
+    audience: String(audience),
+    sharedPasswordLabel: String(sharedPasswordLabel),
+    sharedPasswordHash: String(sharedPasswordHash),
+    tokenTTLSeconds: ttl
+  };
+}
+
 function normalizeRoles(rawRoles = {}) {
   if (typeof rawRoles !== 'object' || rawRoles === null) {
     throw new Error('roles must be an object mapping role names to permission arrays');
@@ -122,6 +150,7 @@ export function parsePlatformConfig(rawConfig) {
   const modules = normalizeModules(rawConfig.modules);
   const tenants = normalizeTenants(rawConfig.tenants ?? [], modules);
   const integrations = normalizeIntegrations(rawConfig.integrations ?? {});
+  const auth = normalizeAuth(rawConfig.auth);
   const roles = normalizeRoles(rawConfig.roles ?? { Admin: ['*'] });
 
   return {
@@ -130,6 +159,7 @@ export function parsePlatformConfig(rawConfig) {
     modules,
     tenants,
     integrations,
+    auth,
     roles
   };
 }

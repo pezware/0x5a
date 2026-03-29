@@ -55,6 +55,7 @@
   - `modules`: feature toggles (`auction`, `volunteer`, `events`, `campaigns`, `donations`, `contacts`). Each module exposes granular capabilities (e.g., `auction.enableBuyNow`, `campaigns.enableResendSync`).
   - `tenants`: optional array supporting multiple org instances with overrides for branding, locales, currency, time zone, authentication policy (password-only, OTP, SSO).
   - `integrations`: `email` (Resend API key/region, sender pool), `payments` (manual, Stripe/checkout proxy), `storage` (bucket, CDN), `analytics` (dashboards/observability metadata).
+  - `auth`: issuer/audience strings for Workers-issued tokens, shared password label/hash, and TTL defaults so Access + Workers stay aligned without hardcoding secrets.
   - `roles`: declarative matrix mapping UI routes/actions to roles (Editor, Cashier, Table Host, Campaign Manager) to keep access policies brand-agnostic.
   - The repository ships an example config plus a parser/normalizer (`src/config/platform-config.js`) and a brand runtime helper (`src/brand/branding-runtime.js`) used by tests and, eventually, the UI. See `docs/configuration.md` for the full workflow.
 

@@ -16,7 +16,11 @@ Tiny-step tracker for the Cloudflare rewrite. Update this file every time you fi
   - Reviewer: Maxwell (sub-agent) — confirmed validation/docs alignment on 2026-03-29.  
   - Completed: 2026-03-29.
 
-- [ ] **Step 3 – Cloudflare Monorepo Skeleton**  
+- [x] **Step 3 – Cloudflare Monorepo Skeleton**  
+  - Scope: land Workers/Pages skeleton plus finalize the example config’s `auth` block + parser/tests so the skeleton has a complete runtime contract.  
+  - Tests: `pnpm test` (node --test suites) on 2026-03-29.  
+  - Reviewer: Epicurus (sub-agent) — LGTM after verifying parser/tests/docs alignment.  
+  - Completed: 2026-03-29.
 - [ ] **Step 4 – Config-backed Authentication & Access Control**  
 - [ ] **Step 5 – D1 Schema + Migration Scripts**  
 - [ ] **Step 6 – Durable Object Bid Engine**  

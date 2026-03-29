@@ -75,6 +75,13 @@
       "dashboardUrl": "https://dashboards.volunteerops.example"
     }
   },
+  "auth": {
+    "issuer": "volunteer-platform",
+    "audience": "volunteer-staff",
+    "sharedPasswordLabel": "demo-shared-password",
+    "sharedPasswordHash": "7aJL2QUp9eLPc7j58vU9HB56WCQfAGO6YM3qAWXsC8A",
+    "tokenTTLSeconds": 3600
+  },
   "roles": {
     "Admin": ["*"],
     "EventLead": [

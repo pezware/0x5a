@@ -24,6 +24,13 @@ function createMinimalConfig(overrides = {}) {
     tenants: [],
     integrations: {},
     roles: { Admin: ['*'] },
+    auth: {
+      issuer: 'demo-issuer',
+      audience: 'demo-audience',
+      sharedPasswordLabel: 'demo-shared-password',
+      sharedPasswordHash: 'demo-hash',
+      tokenTTLSeconds: 3600
+    },
     ...overrides
   };
 }
@@ -45,6 +52,8 @@ test('parsePlatformConfig applies module defaults when missing', () => {
 test('loadPlatformConfig falls back to example file', async () => {
   const parsed = await loadPlatformConfig({ configPath: './config/does-not-exist.json', fallbackPath: defaults.exampleConfigPath });
   assert.equal(parsed.branding.shortName, 'VolunteerOps');
+  assert.equal(parsed.auth.sharedPasswordLabel, 'demo-shared-password');
+  assert.equal(parsed.auth.tokenTTLSeconds, 3600);
 });
 
 test('tenants inherit defaults and override selectively', () => {
@@ -96,4 +105,55 @@ test('rejects malformed branding overrides', () => {
     tenants: [{ id: 'tenant-a', brandingOverrides: 'fake' }]
   });
   assert.throws(() => parsePlatformConfig(config), /brandingOverrides for tenant tenant-a must be an object/);
+});
+
+test('parsePlatformConfig surfaces auth config when provided', () => {
+  const config = createMinimalConfig({
+    branding: exampleConfig.branding,
+    auth: {
+      issuer: 'unit-test',
+      audience: 'volunteer',
+      sharedPasswordLabel: 'shared-label',
+      sharedPasswordHash: 'hash-value',
+      tokenTTLSeconds: 7200
+    }
+  });
+  const parsed = parsePlatformConfig(config);
+  assert.equal(parsed.auth.issuer, 'unit-test');
+  assert.equal(parsed.auth.tokenTTLSeconds, 7200);
+});
+
+test('rejects invalid auth token TTL', () => {
+  const config = createMinimalConfig({
+    branding: exampleConfig.branding,
+    auth: {
+      issuer: 'invalid-ttl',
+      audience: 'volunteer',
+      sharedPasswordLabel: 'shared-label',
+      sharedPasswordHash: 'hash-value',
+      tokenTTLSeconds: 'abc'
+    }
+  });
+  assert.throws(() => parsePlatformConfig(config), /auth\.tokenTTLSeconds must be a positive integer/);
+});
+
+test('auth block is required', () => {
+  const config = createMinimalConfig({
+    branding: exampleConfig.branding,
+    auth: undefined
+  });
+  assert.throws(() => parsePlatformConfig(config), /auth block is required/);
+});
+
+test('auth block fields are validated', () => {
+  const config = createMinimalConfig({
+    branding: exampleConfig.branding,
+    auth: {
+      issuer: '',
+      audience: 'volunteer',
+      sharedPasswordLabel: 'shared-label',
+      sharedPasswordHash: ''
+    }
+  });
+  assert.throws(() => parsePlatformConfig(config), /auth block requires issuer, audience, sharedPasswordLabel, and sharedPasswordHash/);
 });
