@@ -11,14 +11,14 @@ The rewrite treats configuration as code. The repository ships a canonical examp
 | `modules` | Enable/disable domains (auction, volunteer, campaigns, donations, events, contacts) and their fine-grained settings. |
 | `tenants` | Optional overrides per tenant (locale, time zone, module tweaks, branding overrides). |
 | `integrations` | Non-secret metadata for email, payments, storage, and analytics integrations. Secrets live in environment bindings. |
-| `auth` | Shared-password/token defaults: issuer/audience strings, password label, hashed secret, and token TTL. |
+| `auth` | Shared-password/token defaults: issuer/audience strings, password label, `sharedPasswordRoles`, and token TTL (secrets live in Wrangler env bindings). |
 | `roles` | Map role names to permission strings; the UI and Workers will enforce these permissions. |
 
 ## Loader + Runtime Helpers
 
 - `src/config/platform-config.js` provides `loadPlatformConfig()` and `parsePlatformConfig()` functions that normalize and validate the JSON file. The loader automatically falls back to the example file if a real config is missing, which keeps local development frictionless.
 - `src/brand/branding-runtime.js` exposes `createBrandingRuntime()` for UI layers. It merges tenant overrides and exposes helpers for computing class names or color tokens without needing a UI framework yet.
-- The new `auth` block captures brandless defaults for issuer/audience strings, which shared password label to retrieve from Workers Secrets, and how long staff tokens should remain valid. Only hashed values go in the JSON; plaintext secrets stay in Wrangler secrets or Cloudflare Access policies.
+- The new `auth` block captures brandless defaults for issuer/audience strings, which shared password label to retrieve from Workers Secrets, the default roles granted to shared-password sessions, and how long staff tokens should remain valid. Shared password hashes and signing secrets live exclusively in Wrangler secrets; the config only stores labels/roles/TTL metadata.
 
 ## Testing
 

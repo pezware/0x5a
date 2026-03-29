@@ -117,7 +117,7 @@ When practical, each step should pair (a) a docs update, (b) harness verificatio
 
 4. **Config-backed Authentication & Access Control**
    - **Step 4.1 – Worker Auth Inputs & Secrets:** bind platform config + secret inputs inside the Auth Worker and expose `/health` + `/version` routes.  
-   - **Step 4.2 – Shared Password Session Issuer:** add POST endpoint that verifies the shared password hash and signs session tokens with role claims from `createAccessPolicy`.  
+   - **Step 4.2 – Shared Password Session Issuer:** add POST `/sessions/shared-password` endpoint that verifies the shared password (hashed secret via Wrangler) and signs HS256 session tokens with roles derived from `createAccessPolicy`.  
    - **Step 4.3 – Access JWT Validation Middleware:** validate Cloudflare Access JWTs, map Access groups to platform roles, and hand the result to downstream Workers.  
    - **Step 4.4 – Worker Route Guard Harness:** standard middleware enforcing module toggles + permissions before API logic runs, tested via Miniflare harness cases.  
    - **Step 4.5 – Docs & STATUS Closeout:** update docs/STATUS once auth Workers + guards are wired.  

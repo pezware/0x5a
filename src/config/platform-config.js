@@ -104,21 +104,27 @@ function normalizeAuth(rawAuth) {
     issuer,
     audience,
     sharedPasswordLabel,
-    sharedPasswordHash,
+    sharedPasswordHash = '',
+    sharedPasswordRoles = ['Volunteer'],
     tokenTTLSeconds = 3600
   } = rawAuth;
-  if (!issuer || !audience || !sharedPasswordLabel || !sharedPasswordHash) {
-    throw new Error('auth block requires issuer, audience, sharedPasswordLabel, and sharedPasswordHash');
+  if (!issuer || !audience || !sharedPasswordLabel) {
+    throw new Error('auth block requires issuer, audience, and sharedPasswordLabel');
   }
   const ttl = Number(tokenTTLSeconds);
   if (!Number.isInteger(ttl) || ttl <= 0) {
     throw new Error('auth.tokenTTLSeconds must be a positive integer');
   }
+  if (!Array.isArray(sharedPasswordRoles) || sharedPasswordRoles.length === 0) {
+    throw new Error('auth.sharedPasswordRoles must be a non-empty array of role names');
+  }
+  const normalizedRoles = sharedPasswordRoles.map((role) => String(role));
   return {
     issuer: String(issuer),
     audience: String(audience),
     sharedPasswordLabel: String(sharedPasswordLabel),
     sharedPasswordHash: String(sharedPasswordHash),
+    sharedPasswordRoles: normalizedRoles,
     tokenTTLSeconds: ttl
   };
 }
@@ -150,8 +156,13 @@ export function parsePlatformConfig(rawConfig) {
   const modules = normalizeModules(rawConfig.modules);
   const tenants = normalizeTenants(rawConfig.tenants ?? [], modules);
   const integrations = normalizeIntegrations(rawConfig.integrations ?? {});
-  const auth = normalizeAuth(rawConfig.auth);
   const roles = normalizeRoles(rawConfig.roles ?? { Admin: ['*'] });
+  const auth = normalizeAuth(rawConfig.auth);
+  for (const roleName of auth.sharedPasswordRoles) {
+    if (!roles[roleName]) {
+      throw new Error(`auth.sharedPasswordRoles references unknown role '${roleName}'`);
+    }
+  }
 
   return {
     schemaVersion,

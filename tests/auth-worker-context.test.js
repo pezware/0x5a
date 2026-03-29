@@ -20,7 +20,7 @@ const exampleConfig = {
   modules: {},
   tenants: [],
   integrations: {},
-  roles: { Admin: ['*'] },
+  roles: { Admin: ['*'], Volunteer: ['guests.read'] },
   auth: {
     issuer: 'issuer',
     audience: 'aud',

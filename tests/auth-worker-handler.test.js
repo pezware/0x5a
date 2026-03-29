@@ -15,15 +15,18 @@ const exampleConfig = {
   modules: {},
   tenants: [],
   integrations: {},
-  roles: { Admin: ['*'] },
+  roles: { Admin: ['*'], Volunteer: ['guests.read'] },
   auth: {
     issuer: 'issuer',
     audience: 'audience',
     sharedPasswordLabel: 'auth-secret',
     sharedPasswordHash: 'hash',
+    sharedPasswordRoles: ['Volunteer'],
     tokenTTLSeconds: 3600
   }
 };
+
+const sharedPasswordHash = 'zVd/4lYev/I1BdsLsAYwDHzey9RrwOA8RJr6+sosJb8=';
 
 function createEnv(overrides = {}) {
   return {
@@ -35,12 +38,19 @@ function createEnv(overrides = {}) {
         return null;
       }
     },
-    AUTH_SHARED_PASSWORD_HASH: 'hash',
+    AUTH_SHARED_PASSWORD_HASH: sharedPasswordHash,
     AUTH_SESSION_SECRET: 'session',
     AUTH_VERSION: 'test',
     PLATFORM_CONFIG_KV_KEY: DEFAULT_PLATFORM_CONFIG_KV_KEY,
     ...overrides
   };
+}
+
+function createJsonRequest(path, init) {
+  return new Request(`https://example.com${path}`, {
+    headers: { 'content-type': 'application/json' },
+    ...init
+  });
 }
 
 async function json(response) {
@@ -90,4 +100,39 @@ test('handleAuthRequest exposes version metadata', async () => {
 test('handleAuthRequest returns 404 for unknown routes', async () => {
   const response = await handleAuthRequest(new Request('https://example.com/unknown'), createEnv());
   assert.equal(response.status, 404);
+});
+
+test('handleAuthRequest issues shared password session tokens', async () => {
+  const response = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({ password: 'demo-secret' }) }),
+    createEnv()
+  );
+  const body = await json(response);
+  assert.equal(response.status, 200, `response status ${response.status}: ${JSON.stringify(body)}`);
+  assert.ok(body.token);
+  assert.equal(body.roles.includes('Volunteer'), true);
+});
+
+test('handleAuthRequest rejects invalid shared password', async () => {
+  const response = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({ password: 'wrong' }) }),
+    createEnv()
+  );
+  assert.equal(response.status, 401);
+});
+
+test('handleAuthRequest validates request body', async () => {
+  const response = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({}) }),
+    createEnv()
+  );
+  assert.equal(response.status, 400);
+});
+
+test('handleAuthRequest reports secret/config issues for shared password endpoint', async () => {
+  const response = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({ password: 'demo-secret' }) }),
+    createEnv({ AUTH_SESSION_SECRET: '' })
+  );
+  assert.equal(response.status, 503);
 });

@@ -42,8 +42,13 @@ function requirePermission(userRoles, permission) {
   - Tests: config loader stubs, secret-binding guards (`tests/auth-worker-context.test.js`).
 
 - **Step 4.2 – Shared Password Session Issuer**  
-  - POST endpoint that validates the shared password hash, issues signed session tokens, and annotates them with role claims derived from `createAccessPolicy`.  
-  - Tests: crypto verification, TTL enforcement, error handling for lockouts.
+  - POST `/sessions/shared-password` validates the shared password against the Wrangler secret, issues HS256 session tokens, and annotates them with roles from `auth.sharedPasswordRoles` (after verifying those roles exist in the access policy).  
+  - Secrets:  
+    - `AUTH_SHARED_PASSWORD_HASH` — base64-encoded SHA-256 digest of the shared password (generate via `node -e "crypto.subtle.digest('SHA-256', new TextEncoder().encode(process.argv[1])).then(b => console.log(Buffer.from(b).toString('base64')))" 'my-password'`).  
+    - `AUTH_SESSION_SECRET` — signing secret for JWTs.  
+  - Request body: `{"password":"<plain text>", "tenantId":"optional"}`.  
+  - Responses: `200` with `{ token, expiresAt, roles, issuer, audience }`, `400` for malformed bodies, `401` for invalid credentials, `503` when secrets/config are missing.  
+  - Tests: crypto verification, handler coverage (`tests/auth-worker-handler.test.js`), session token helper (`tests/session-token.test.js`).
 
 - **Step 4.3 – Access JWT Validation Middleware**  
   - Utilities that accept Cloudflare Access JWTs, validate issuer/audience/expiry, and translate Access groups → platform roles.  
@@ -55,3 +60,32 @@ function requirePermission(userRoles, permission) {
 
 - **Step 4.5 – Documentation & STATUS Closeout**  
   - Finalize docs with real Worker wiring instructions, update `STATUS.md`, and ensure harness commands cover auth flows end-to-end.
+
+## Shared Password Session Endpoint
+
+- **URL:** `POST /sessions/shared-password` on the Auth Worker defined in `wrangler.auth.toml`.
+- **Purpose:** exchange the shared staff password for a signed session token that embeds the configured roles.
+- **Request Body:**
+  ```json
+  {
+    "password": "demo-secret",
+    "tenantId": "optional-tenant"
+  }
+  ```
+- **Response (200):**
+  ```json
+  {
+    "token": "<HS256 JWT>",
+    "expiresAt": 1774819127,
+    "roles": ["Volunteer"],
+    "issuer": "volunteer-platform",
+    "audience": "volunteer-staff"
+  }
+  ```
+- **Failure States:**  
+  - `400` – invalid JSON or missing `password`.  
+  - `401` – password mismatch.  
+  - `503` – config/secret unavailable (mirrors `/health`).  
+- **Implementation Notes:**  
+  - Password hashes live in Wrangler secrets (`AUTH_SHARED_PASSWORD_HASH`). The JSON config retains the label and schema defaults but no longer stores sensitive material.  
+  - JWTs use HS256 via Web Crypto; see `src/auth/session-token.js`. The helper also enforces `auth.tokenTTLSeconds`.

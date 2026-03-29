@@ -23,12 +23,12 @@ function createMinimalConfig(overrides = {}) {
     modules: {},
     tenants: [],
     integrations: {},
-    roles: { Admin: ['*'] },
+    roles: { Admin: ['*'], Volunteer: ['guests.read'] },
     auth: {
       issuer: 'demo-issuer',
       audience: 'demo-audience',
       sharedPasswordLabel: 'demo-shared-password',
-      sharedPasswordHash: 'demo-hash',
+      sharedPasswordRoles: ['Volunteer'],
       tokenTTLSeconds: 3600
     },
     ...overrides
@@ -110,16 +110,18 @@ test('rejects malformed branding overrides', () => {
 test('parsePlatformConfig surfaces auth config when provided', () => {
   const config = createMinimalConfig({
     branding: exampleConfig.branding,
+    roles: { Admin: ['*'], Volunteer: ['guests.read'], Cashier: ['checkout.read'] },
     auth: {
       issuer: 'unit-test',
       audience: 'volunteer',
       sharedPasswordLabel: 'shared-label',
-      sharedPasswordHash: 'hash-value',
+      sharedPasswordRoles: ['Volunteer', 'Cashier'],
       tokenTTLSeconds: 7200
     }
   });
   const parsed = parsePlatformConfig(config);
   assert.equal(parsed.auth.issuer, 'unit-test');
+  assert.deepEqual(parsed.auth.sharedPasswordRoles, ['Volunteer', 'Cashier']);
   assert.equal(parsed.auth.tokenTTLSeconds, 7200);
 });
 
@@ -130,7 +132,6 @@ test('rejects invalid auth token TTL', () => {
       issuer: 'invalid-ttl',
       audience: 'volunteer',
       sharedPasswordLabel: 'shared-label',
-      sharedPasswordHash: 'hash-value',
       tokenTTLSeconds: 'abc'
     }
   });
@@ -151,9 +152,34 @@ test('auth block fields are validated', () => {
     auth: {
       issuer: '',
       audience: 'volunteer',
-      sharedPasswordLabel: 'shared-label',
-      sharedPasswordHash: ''
+      sharedPasswordLabel: 'shared-label'
     }
   });
-  assert.throws(() => parsePlatformConfig(config), /auth block requires issuer, audience, sharedPasswordLabel, and sharedPasswordHash/);
+  assert.throws(() => parsePlatformConfig(config), /auth block requires issuer, audience, and sharedPasswordLabel/);
+});
+
+test('sharedPasswordRoles must be a non-empty array', () => {
+  const config = createMinimalConfig({
+    branding: exampleConfig.branding,
+    auth: {
+      issuer: 'issuer',
+      audience: 'aud',
+      sharedPasswordLabel: 'label',
+      sharedPasswordRoles: 'Admin'
+    }
+  });
+  assert.throws(() => parsePlatformConfig(config), /auth\.sharedPasswordRoles/);
+});
+
+test('sharedPasswordRoles must reference defined roles', () => {
+  const config = createMinimalConfig({
+    branding: exampleConfig.branding,
+    auth: {
+      issuer: 'issuer',
+      audience: 'aud',
+      sharedPasswordLabel: 'label',
+      sharedPasswordRoles: ['UnknownRole']
+    }
+  });
+  assert.throws(() => parsePlatformConfig(config), /auth\.sharedPasswordRoles references unknown role/);
 });
