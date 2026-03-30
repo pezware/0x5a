@@ -27,7 +27,7 @@ const exampleConfig = {
   }
 };
 
-const sharedPasswordHash = 'zVd/4lYev/I1BdsLsAYwDHzey9RrwOA8RJr6+sosJb8=';
+const sharedPasswordHash = 'ABQH2xhUyBufNeWhihOJMULXmXAnDgGeEUrzuQ3Tamg=';
 
 function createEnv(overrides = {}) {
   return {

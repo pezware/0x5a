@@ -43,9 +43,9 @@ function requirePermission(userRoles, permission) {
 
 - **Step 4.2 – Shared Password Session Issuer**  
   - POST `/sessions/shared-password` validates the shared password against the Wrangler secret, issues HS256 session tokens, and annotates them with roles from `auth.sharedPasswordRoles` (after verifying those roles exist in the access policy).  
-  - Secrets:  
-    - `AUTH_SHARED_PASSWORD_HASH` — base64-encoded SHA-256 digest of the shared password (generate via `node -e "crypto.subtle.digest('SHA-256', new TextEncoder().encode(process.argv[1])).then(b => console.log(Buffer.from(b).toString('base64')))" 'my-password'`).  
-    - `AUTH_SESSION_SECRET` — signing secret for JWTs.  
+- Secrets:  
+  - `AUTH_SHARED_PASSWORD_HASH` — base64-encoded PBKDF2-SHA256 digest of the shared password (600k iterations, salt `shared-password:v1`, 256-bit output). Generate via `node scripts/hash-shared-password.mjs "my-password"` or pipe from stdin (`echo "my-password" | node scripts/hash-shared-password.mjs`).  
+  - `AUTH_SESSION_SECRET` — signing secret for JWTs.  
   - Request body: `{"password":"<plain text>", "tenantId":"optional"}`.  
   - Responses: `200` with `{ token, expiresAt, roles, issuer, audience }`, `400` for malformed bodies, `401` for invalid credentials, `503` when secrets/config are missing.  
   - Tests: crypto verification, handler coverage (`tests/auth-worker-handler.test.js`), session token helper (`tests/session-token.test.js`).
@@ -88,4 +88,5 @@ function requirePermission(userRoles, permission) {
   - `503` – config/secret unavailable (mirrors `/health`).  
 - **Implementation Notes:**  
   - Password hashes live in Wrangler secrets (`AUTH_SHARED_PASSWORD_HASH`). The JSON config retains the label and schema defaults but no longer stores sensitive material.  
+  - Hashes use PBKDF2-SHA256 (salt `shared-password:v1`, 600k iterations) to slow offline attacks; this matches the helper + CLI script mentioned above.  
   - JWTs use HS256 via Web Crypto; see `src/auth/session-token.js`. The helper also enforces `auth.tokenTTLSeconds`.

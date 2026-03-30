@@ -1,22 +1,40 @@
 import { base64EncodeBytes, encodeUtf8 } from './encoding.js';
 
-const HASH_ALGORITHM = 'SHA-256';
+const SHARED_PASSWORD_KDF_SALT = encodeUtf8('shared-password:v1');
+const SHARED_PASSWORD_KDF_ITERATIONS = 600_000;
+const SHARED_PASSWORD_KDF_BITS = 256;
 
-function constantTimeEquals(a, b) {
-  if (a.length !== b.length) {
-    return false;
-  }
-  let result = 0;
-  for (let i = 0; i < a.length; i += 1) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+export function constantTimeEquals(a, b) {
+  const left = a ?? '';
+  const right = b ?? '';
+  const len = Math.max(left.length, right.length);
+  let result = left.length ^ right.length;
+  for (let i = 0; i < len; i += 1) {
+    const leftCode = left.charCodeAt(i) || 0;
+    const rightCode = right.charCodeAt(i) || 0;
+    result |= leftCode ^ rightCode;
   }
   return result === 0;
 }
 
+async function deriveSharedPasswordBits(password) {
+  const keyMaterial = await crypto.subtle.importKey('raw', encodeUtf8(password ?? ''), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: 'SHA-256',
+      salt: SHARED_PASSWORD_KDF_SALT,
+      iterations: SHARED_PASSWORD_KDF_ITERATIONS
+    },
+    keyMaterial,
+    SHARED_PASSWORD_KDF_BITS
+  );
+  return new Uint8Array(bits);
+}
+
 export async function hashSharedPassword(password) {
-  const data = encodeUtf8(password ?? '');
-  const digest = await crypto.subtle.digest(HASH_ALGORITHM, data);
-  return base64EncodeBytes(new Uint8Array(digest));
+  const derivedBytes = await deriveSharedPasswordBits(password ?? '');
+  return base64EncodeBytes(derivedBytes);
 }
 
 export async function verifySharedPassword(password, expectedHash) {
