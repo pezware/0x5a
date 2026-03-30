@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
 
 import { handleAuthRequest } from '../src/auth/auth-worker-handler.js';
 import { DEFAULT_PLATFORM_CONFIG_KV_KEY } from '../src/auth/auth-worker-context.js';
@@ -58,6 +59,14 @@ async function json(response) {
   return JSON.parse(text);
 }
 
+function decodeJwtPayload(token) {
+  const [, payload] = token.split('.');
+  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const padLength = (4 - (normalized.length % 4)) % 4;
+  const padded = normalized + '='.repeat(padLength);
+  return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+}
+
 test('handleAuthRequest returns health payload when config + secrets available', async () => {
   const response = await handleAuthRequest(new Request('https://example.com/health'), createEnv());
   assert.equal(response.status, 200);
@@ -102,6 +111,12 @@ test('handleAuthRequest returns 404 for unknown routes', async () => {
   assert.equal(response.status, 404);
 });
 
+test('shared password endpoint enforces POST + Allow header', async () => {
+  const response = await handleAuthRequest(new Request('https://example.com/sessions/shared-password'), createEnv());
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get('Allow'), 'POST');
+});
+
 test('handleAuthRequest issues shared password session tokens', async () => {
   const response = await handleAuthRequest(
     createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({ password: 'demo-secret' }) }),
@@ -133,6 +148,60 @@ test('handleAuthRequest reports secret/config issues for shared password endpoin
   const response = await handleAuthRequest(
     createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({ password: 'demo-secret' }) }),
     createEnv({ AUTH_SESSION_SECRET: '' })
+  );
+  assert.equal(response.status, 503);
+});
+
+test('shared password endpoint validates tenantId', async () => {
+  const customConfig = JSON.parse(JSON.stringify(exampleConfig));
+  customConfig.tenants = [{ id: 'default', name: 'Default' }];
+  const env = createEnv({
+    CONFIG_KV: {
+      async get(key) {
+        if (key === DEFAULT_PLATFORM_CONFIG_KV_KEY) {
+          return customConfig;
+        }
+        return null;
+      }
+    }
+  });
+  const badTenantResponse = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', {
+      method: 'POST',
+      body: JSON.stringify({ password: 'demo-secret', tenantId: 'unknown' })
+    }),
+    env
+  );
+  assert.equal(badTenantResponse.status, 400);
+  const goodTenantResponse = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', {
+      method: 'POST',
+      body: JSON.stringify({ password: 'demo-secret', tenantId: 'default' })
+    }),
+    env
+  );
+  const body = await json(goodTenantResponse);
+  assert.equal(goodTenantResponse.status, 200);
+  const payload = decodeJwtPayload(body.token);
+  assert.equal(payload.tenantId, 'default');
+});
+
+test('shared password endpoint surfaces misconfigured roles as 503', async () => {
+  const configWithInvalidRoles = JSON.parse(JSON.stringify(exampleConfig));
+  configWithInvalidRoles.auth.sharedPasswordRoles = ['Nonexistent'];
+  const env = createEnv({
+    CONFIG_KV: {
+      async get(key) {
+        if (key === DEFAULT_PLATFORM_CONFIG_KV_KEY) {
+          return configWithInvalidRoles;
+        }
+        return null;
+      }
+    }
+  });
+  const response = await handleAuthRequest(
+    createJsonRequest('/sessions/shared-password', { method: 'POST', body: JSON.stringify({ password: 'demo-secret' }) }),
+    env
   );
   assert.equal(response.status, 503);
 });

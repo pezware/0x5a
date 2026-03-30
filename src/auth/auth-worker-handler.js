@@ -68,7 +68,7 @@ function handleVersion(env) {
 
 async function handleSharedPasswordSession(request, env) {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, { status: 405 });
+    return jsonResponse({ error: 'Method not allowed' }, { status: 405, headers: { Allow: 'POST' } });
   }
   let payload;
   try {
@@ -108,10 +108,22 @@ async function handleSharedPasswordSession(request, env) {
     }
   });
   if (roles.length === 0) {
-    return jsonResponse({ error: 'No valid roles configured for shared password access' }, { status: 500 });
+    return jsonResponse({ error: 'No valid roles configured for shared password access' }, { status: 503 });
+  }
+  let tenantId = null;
+  const rawTenantId = payload?.tenantId ?? null;
+  if (rawTenantId !== null && rawTenantId !== undefined) {
+    if (typeof rawTenantId !== 'string' || rawTenantId.trim().length === 0) {
+      return jsonResponse({ error: 'tenantId must be a non-empty string' }, { status: 400 });
+    }
+    const knownTenantIds = (config.tenants ?? []).map((tenant) => tenant.id);
+    if (!knownTenantIds.includes(rawTenantId)) {
+      return jsonResponse({ error: 'Unknown tenantId' }, { status: 400 });
+    }
+    tenantId = rawTenantId;
   }
   const session = await createSessionToken(
-    { roles, tenantId: payload?.tenantId ?? null },
+    { roles, tenantId },
     {
       secret: secrets.sessionSecret,
       issuer: config.auth.issuer,

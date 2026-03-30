@@ -12,6 +12,9 @@ export async function createSessionToken(claims, { secret, issuer, audience, ttl
   if (!secret) {
     throw new Error('session secret required');
   }
+  if (!Number.isFinite(ttlSeconds) || ttlSeconds <= 0) {
+    throw new Error('ttlSeconds must be a positive finite number');
+  }
   const issuedAtMs = typeof options.now === 'number' ? options.now : Date.now();
   const issuedAt = Math.floor(issuedAtMs / 1000);
   const expiresAt = issuedAt + ttlSeconds;
