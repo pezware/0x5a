@@ -2,3 +2,12 @@ packages:
   - workers
   - pages-functions
   - src
+
+# Supply-chain hardening (pnpm >= 10.16)
+minimumReleaseAge: 7200 # 5 days in minutes
+strictDepBuilds: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd
